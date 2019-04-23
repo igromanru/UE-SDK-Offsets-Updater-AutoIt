@@ -28,10 +28,13 @@ Else
  EndIf
 
 Func UpdateOffsets($OffsetsFilePath, $SdkPath)
-	If FileExists($OffsetsFilePath) = 0 Then
-		MsgBox($MB_ICONWARNING, $TITLE, "Offsets file " & $OffsetsFilePath & " doesn't exists")
-		Return
-	EndIf
+   If FileExists($OffsetsFilePath) = 0 Then
+	  $OffsetsFilePath = @ScriptDir & "\" & $OffsetsFilePath
+	  If FileExists($OffsetsFilePath) = 0 Then
+		 MsgBox($MB_ICONWARNING, $TITLE, "Offsets file " & $OffsetsFilePath & " doesn't exists")
+		 Return
+	  EndIf
+   EndIf
 	If FileExists($SdkPath) = 0 Then
 		MsgBox($MB_ICONWARNING, $TITLE, "SDK directory " & $SdkPath & " doesn't exists")
 		Return
@@ -59,6 +62,7 @@ Func UpdateOffsets($OffsetsFilePath, $SdkPath)
 	$offsetsFile = FileOpen($OffsetsFilePath, $FO_OVERWRITE + $FO_UTF8_NOBOM)
 	_FileWriteFromArray($offsetsFile, $offsetsFileArray)
 	FileClose($offsetsFile)
+	MsgBox(0, $TITLE, "Offsets Update complete")
  EndFunc
 
 Func GetOffsetFromSdk($offsetInfo, $sdkPath)
