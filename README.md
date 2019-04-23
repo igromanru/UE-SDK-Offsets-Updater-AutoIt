@@ -3,6 +3,7 @@ The script can automatically update a C++ or C# class with a special format from
 
 ## Requirements
 None, if you're using the compiled version.  
+
 For the .au3 script:  
 [AutoIt](https://www.autoitscript.com/site/autoit/downloads/) v3.3 or later
 
