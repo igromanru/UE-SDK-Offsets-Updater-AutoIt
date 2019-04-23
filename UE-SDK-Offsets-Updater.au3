@@ -7,6 +7,10 @@
 
 #include <MsgBoxConstants.au3>
 #include <FileConstants.au3>
+#include <StringConstants.au3>
+#include <Array.au3>
+#include <File.au3>
+
 
 Global Const $TITLE = "Unreal Engine Offsets Updater"
 
@@ -23,7 +27,8 @@ Else
 		ConsoleWrite("Second param: " & $CmdLine[2] & @CRLF)
 	EndIf
 	MsgBox($MB_ICONWARNING, $TITLE, "Not enough parameters were passed ("&$CmdLine[0]&")")
-EndIf
+ EndIf
+UpdateOffsets(@ScriptDir & "\Offsets.h", "D:\Git\Private\SDKs\SoT\SoT-SDK\SDK")
 
 Func UpdateOffsets($OffsetsFilePath, $SdkPath)
 	If FileExists($OffsetsFilePath) = 0 Then
@@ -35,13 +40,53 @@ Func UpdateOffsets($OffsetsFilePath, $SdkPath)
 		Return
 	EndIf
 
-	Local $offsetsFile = FileOpen($BASIC_CPP, $FO_READ + $FO_UTF8_NOBOM)
+	Local $offsetsFile = FileOpen($OffsetsFilePath, $FO_READ + $FO_UTF8_NOBOM)
 	Local $offsetsFileArray = FileReadToArray($offsetsFile)
 	FileClose($offsetsFile)
 	For $i = 0 To UBound($offsetsFileArray)-1
-		; ToDo
+	  Local $offsetInfo = StringRegExp($offsetsFileArray[$i], "\/\/ ?:(.*?):(.*?):(.*?)$", $STR_REGEXPARRAYMATCH)
+	  If Not @error Then
+		 If UBound($offsetInfo) > 2 Then
+			Local $offset = GetOffsetFromSdk($offsetInfo, $sdkPath)
+			$i += 1
+			StringRegExpReplace($offsetsFileArray[$i], "0x(.*?);", $offset)
+		 Else
+			MsgBox($MB_ICONWARNING, $TITLE, $offsetsFileArray[$i] & " is not a valid offset tag")
+		 EndIf
+	  EndIf
 	Next
-	$offsetsFile = FileOpen($BASIC_CPP, $FO_OVERWRITE + $FO_UTF8_NOBOM)
+	$offsetsFile = FileOpen($OffsetsFilePath, $FO_OVERWRITE + $FO_UTF8_NOBOM)
 	_FileWriteFromArray($offsetsFile, $offsetsFileArray)
 	FileClose($offsetsFile)
+ EndFunc
+
+Func GetOffsetFromSdk($offsetInfo, $sdkPath)
+   Local $result = "error"
+   If UBound($offsetInfo) > 2 Then
+	  If StringRight($sdkPath, 1) <> "\" Or StringRight($sdkPath, 1) <> "/" Then
+		 $sdkPath &= "\"
+	  EndIf
+	  Local $class = $offsetInfo[0]
+	  Local $field = $offsetInfo[1]
+	  Local $file =  $sdkPath & $offsetInfo[2]
+	  Local $fileHandle = FileOpen($file, $FO_READ + $FO_UTF8_NOBOM)
+	  Local $fileArray = FileReadToArray($fileHandle)
+	  Local $searchForOffset = False
+	  FileClose($fileHandle)
+	  For $i = 0 To UBound($fileArray)-1
+		 If Not $searchForOffset Then
+			Local $isRightClass = StringRegExp($fileArray[$i], "^(?:class|struct) " & $class & "(?:\s|$)", $STR_REGEXPMATCH)
+			If $isRightClass = 1 Then
+			   $searchForOffset = True
+			EndIf
+		 Else
+			Local $match = StringRegExp($fileArray[$i], ".*?" & $field & ";.*? \/\/ 0x(.*?)\(0x", $STR_REGEXPARRAYMATCH)
+			If Not @error Then
+			   $result = $match[0]
+			   ExitLoop
+			EndIf
+		 EndIf
+	  Next
+   EndIf
+   Return $result
 EndFunc
