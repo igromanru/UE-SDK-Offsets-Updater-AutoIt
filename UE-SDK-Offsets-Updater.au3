@@ -8,9 +8,7 @@
 #include <MsgBoxConstants.au3>
 #include <FileConstants.au3>
 #include <StringConstants.au3>
-#include <Array.au3>
 #include <File.au3>
-
 
 Global Const $TITLE = "Unreal Engine Offsets Updater"
 
@@ -28,7 +26,6 @@ Else
 	EndIf
 	MsgBox($MB_ICONWARNING, $TITLE, "Not enough parameters were passed ("&$CmdLine[0]&")")
  EndIf
-UpdateOffsets(@ScriptDir & "\Offsets.h", "D:\Git\Private\SDKs\SoT\SoT-SDK\SDK")
 
 Func UpdateOffsets($OffsetsFilePath, $SdkPath)
 	If FileExists($OffsetsFilePath) = 0 Then
@@ -49,7 +46,11 @@ Func UpdateOffsets($OffsetsFilePath, $SdkPath)
 		 If UBound($offsetInfo) > 2 Then
 			Local $offset = GetOffsetFromSdk($offsetInfo, $sdkPath)
 			$i += 1
-			StringRegExpReplace($offsetsFileArray[$i], "0x(.*?);", $offset)
+			Local $updatedString = StringRegExpReplace($offsetsFileArray[$i], "0x.*?;", "0x" & $offset & ";")
+			If Not @error Then
+			   $offsetsFileArray[$i] = $updatedString
+			EndIf
+			ConsoleWrite($offsetsFileArray[$i] & @CRLF)
 		 Else
 			MsgBox($MB_ICONWARNING, $TITLE, $offsetsFileArray[$i] & " is not a valid offset tag")
 		 EndIf
