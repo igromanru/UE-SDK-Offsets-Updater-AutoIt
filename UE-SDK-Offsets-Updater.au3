@@ -83,23 +83,34 @@ Func GetOffsetFromSdk($offsetInfo, $SdkPath)
 		Local $field = $offsetInfo[1]
 		Local $file = $SdkPath & $offsetInfo[2]
 		Local $fileHandle = FileOpen($file, $FO_READ + $FO_UTF8_NOBOM)
-		Local $fileArray = FileReadToArray($fileHandle)
-		Local $searchForOffset = False
-		FileClose($fileHandle)
-		For $i = 0 To UBound($fileArray) - 1
-			If Not $searchForOffset Then
-				Local $isRightClass = StringRegExp($fileArray[$i], "^(?:class|struct) " & $class & "(?:\s|$)", $STR_REGEXPMATCH)
-				If $isRightClass = 1 Then
-					$searchForOffset = True
+		If $fileHandle <> -1 Then
+			Local $fileArray = FileReadToArray($fileHandle)
+			Local $searchForOffset = False
+			FileClose($fileHandle)
+			For $i = 0 To UBound($fileArray) - 1
+				If Not $searchForOffset Then
+					Local $isRightClass = StringRegExp($fileArray[$i], "^(?:class|struct) " & $class & "(?:\s|$)", $STR_REGEXPMATCH)
+					If $isRightClass = 1 Then
+						$searchForOffset = True
+					EndIf
+				Else
+					If StringLeft($fileArray[$i], 2) = "};" Then
+						MsgBox($MB_ICONWARNING, $TITLE, "Field """ & $field & """ coudn't be found in the class """ & $class & '"' & @CRLF & "File: " & $file)
+						ExitLoop
+					EndIf
+					Local $match = StringRegExp($fileArray[$i], ".*?" & $field & ";.*? \/\/ 0x(.*?)\(0x", $STR_REGEXPARRAYMATCH)
+					If Not @error Then
+						$result = $match[0]
+						ExitLoop
+					EndIf
 				EndIf
-			Else
-				Local $match = StringRegExp($fileArray[$i], ".*?" & $field & ";.*? \/\/ 0x(.*?)\(0x", $STR_REGEXPARRAYMATCH)
-				If Not @error Then
-					$result = $match[0]
-					ExitLoop
-				EndIf
+			Next
+			If $searchForOffset = False Then
+				MsgBox($MB_ICONWARNING, $TITLE, "Class """ & $class & """ coudn't be found" & @CRLF & "File: " & $file)
 			EndIf
-		Next
+		Else
+			MsgBox($MB_ICONWARNING, $TITLE, "File """ & $file & """ coudn't be opened")
+		EndIf
 	EndIf
 	Return $result
 EndFunc   ;==>GetOffsetFromSdk
