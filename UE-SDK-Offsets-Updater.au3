@@ -1,7 +1,7 @@
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_UseUpx=y
 #AutoIt3Wrapper_UseX64=n
-#AutoIt3Wrapper_Res_Fileversion=1.0.1
+#AutoIt3Wrapper_Res_Fileversion=1.0.1.0
 #AutoIt3Wrapper_Res_ProductName=Unreal Engine SDK Offsets Updater
 #AutoIt3Wrapper_Res_ProductVersion=1.0.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright 2019 Igromanru
@@ -52,7 +52,7 @@ Func UpdateOffsets($OffsetsFilePath, $SdkPath)
 	Local $offsetsFileArray = FileReadToArray($offsetsFile)
 	FileClose($offsetsFile)
 	For $i = 0 To UBound($offsetsFileArray) - 1
-		Local $offsetInfo = StringRegExp($offsetsFileArray[$i], "\/\/ ?:(.*?):(.*?):(.*?)$", $STR_REGEXPARRAYMATCH)
+		Local $offsetInfo = StringRegExp($offsetsFileArray[$i], "\/\/.*?:(.*?):(.*?):(.*?)$", $STR_REGEXPARRAYMATCH)
 		If Not @error Then
 			If UBound($offsetInfo) > 2 Then
 				Local $offset = GetOffsetFromSdk($offsetInfo, $SdkPath)
@@ -98,7 +98,7 @@ Func GetOffsetFromSdk($offsetInfo, $SdkPath)
 						MsgBox($MB_ICONWARNING, $TITLE, "Field """ & $field & """ coudn't be found in the class """ & $class & '"' & @CRLF & "File: " & $file)
 						ExitLoop
 					EndIf
-					Local $match = StringRegExp($fileArray[$i], ".*?" & $field & ";.*? \/\/ 0x(.*?)\(0x", $STR_REGEXPARRAYMATCH)
+					Local $match = StringRegExp($fileArray[$i], ".*? " & $field & ";.*? \/\/ 0x(.*?)\(0x", $STR_REGEXPARRAYMATCH)
 					If Not @error Then
 						$result = $match[0]
 						ExitLoop
